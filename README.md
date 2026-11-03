@@ -16,7 +16,7 @@ OBS 녹화 상태(녹화 중 / 일시정지 / 정지)와 마이크 음소거 상
 | M3 | 캡처 제외 + 최상위 유지 | 코드 완료, 실기 확인 대기 |
 | M4 | 설정 UI | 코드 완료, 실기 확인 대기 |
 | M5 | 마이크 음소거 아이콘 | 코드 완료, 실기 확인 대기 |
-| M6 | 패키징 + 실사용 테스트 | 예정 |
+| M6 | 패키징 + 실사용 테스트 | 패키징 완료, 실사용 테스트 대기 |
 
 ## 빌드 (Windows)
 
@@ -34,14 +34,35 @@ cmake --install build_x64 --prefix release --config RelWithDebInfo
 
 ## 설치 (Windows)
 
-1. OBS 종료
-2. 빌드 결과의 `obs-status-overlay` 폴더를 `C:\ProgramData\obs-studio\plugins\`에 복사
-   - 결과 구조: `C:\ProgramData\obs-studio\plugins\obs-status-overlay\bin\64bit\obs-status-overlay.dll`
-3. OBS 실행 후 `도움말 > 로그 파일 > 현재 로그 보기`에서 아래 줄 확인
+1. GitHub Actions 최신 `main` 실행 페이지 → Artifacts에서 `obs-status-overlay-<버전>-windows-x64-<커밋>` 다운로드 후 압축 해제
+2. OBS 종료
+3. `install.cmd` 실행 (관리자 권한 요청 → 허용)
+   - 설치 위치: `C:\ProgramData\obs-studio\plugins\obs-status-overlay\`
+   - 제거: `uninstall.cmd`
+4. OBS 실행 후 `도움말 > 로그 파일 > 현재 로그 보기`에서 아래 줄 확인
 
 ```
 [obs-status-overlay] plugin loaded successfully (version 0.1.0)
+[obs-status-overlay] capture exclusion applied: WDA_EXCLUDEFROMCAPTURE
 ```
+
+수동 설치: 압축 안의 `obs-status-overlay` 폴더를 `C:\ProgramData\obs-studio\plugins\`에 복사
+
+## 사용법
+
+- 메뉴: `도구 > 녹화 상태 오버레이`
+- 기본값: 주 모니터, 오른쪽 위 배지, 글자 28px, 테두리 8px
+- 처음 설정할 것: 표시 모니터를 2번(녹화 대상) 모니터로, 마이크 소스를 실제 마이크로 지정 후 `확인`
+- 설정 파일: `%APPDATA%\obs-studio\plugin_config\obs-status-overlay\settings.json`
+
+| 상태 | 표시 |
+| --- | --- |
+| 녹화 중 | 배지 위치에 작은 `● REC` (설정에서 끌 수 있음) |
+| 일시정지 | 빨간 테두리 + `녹화 일시정지` 배지 |
+| 정지 | 노란 테두리 + `녹화 안 함` 배지 (설정에서 끌 수 있음) |
+| 마이크 음소거 | 배지 옆 음소거 마이크 아이콘 (모든 상태) |
+
+설정 창의 `녹화본 제외` 항목이 실패로 표시되면 오버레이가 녹화본에 찍힐 수 있으니 녹화 전 확인 필요
 
 ## M1 확인 방법
 

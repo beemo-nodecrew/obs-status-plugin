@@ -58,6 +58,13 @@ function Package {
 
     Remove-Item @RemoveArgs
 
+    Log-Group "Adding install scripts..."
+    $InstallScripts = @('install.ps1', 'install.cmd', 'uninstall.cmd')
+    foreach ( $Script in $InstallScripts ) {
+        Copy-Item -Path "${ProjectRoot}/build-aux/windows/${Script}" -Destination "${ProjectRoot}/release/${Configuration}/" -Force
+    }
+    Log-Group
+
     Log-Group "Archiving ${ProductName}..."
     $CompressArgs = @{
         Path = (Get-ChildItem -Path "${ProjectRoot}/release/${Configuration}" -Exclude "${OutputName}*.*")
