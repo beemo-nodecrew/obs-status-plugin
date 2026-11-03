@@ -11,7 +11,7 @@ OBS 녹화 상태(녹화 중 / 일시정지 / 정지)와 마이크 음소거 상
 | 마일스톤 | 내용 | 상태 |
 | --- | --- | --- |
 | M0 | 빈 플러그인 빌드·로드 확인 | 코드 완료, 실기 확인 대기 |
-| M1 | 녹화 상태 이벤트 수신 → 로그 | 예정 |
+| M1 | 녹화 상태 이벤트 수신 → 로그 | 코드 완료, 실기 확인 대기 |
 | M2 | 고정 모니터에 상태별 오버레이 | 예정 |
 | M3 | 캡처 제외 + 최상위 유지 | 예정 |
 | M4 | 설정 UI | 예정 |
@@ -41,6 +41,18 @@ cmake --install build_x64 --prefix release --config RelWithDebInfo
 
 ```
 [obs-status-overlay] plugin loaded successfully (version 0.1.0)
+```
+
+## M1 확인 방법
+
+OBS에서 녹화 시작 → 일시정지 → 재개 → 정지 후 로그에 아래 줄이 순서대로 남는지 확인
+
+```
+[obs-status-overlay] initial recording state: stopped
+[obs-status-overlay] recording state: stopped -> recording (started)
+[obs-status-overlay] recording state: recording -> paused (paused)
+[obs-status-overlay] recording state: paused -> recording (unpaused)
+[obs-status-overlay] recording state: recording -> stopped (stopped)
 ```
 
 ## 라이선스
