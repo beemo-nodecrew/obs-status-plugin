@@ -1,0 +1,1 @@
+- 커밋·push·이력 조회·되돌리기는 git-workflow 스킬과 `.claude/git-workflow.md`를 따릅니다. 작업을 마칠 때 커밋하지 않은 변경이 있으면 커밋을 제안합니다.

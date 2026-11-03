@@ -16,6 +16,8 @@
 !LICENSE
 !README.md
 !/docs
+!/.claude
+!CLAUDE.md
 
 # Exclude lock files
 *.lock.json
