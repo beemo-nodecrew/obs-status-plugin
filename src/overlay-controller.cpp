@@ -47,6 +47,7 @@ void OverlayController::start()
 		window_->setRecordingState(state_);
 	}
 	mic_->setSourceName(settings_.micSource);
+	mic_->setLevelLogEnabled(settings_.micLevelLog);
 	window_->setMicMuted(mic_->isMuted());
 	placeWindow();
 	topmostTimer_.start();
@@ -85,6 +86,7 @@ void OverlayController::applySettings(const OverlaySettings &settings)
 {
 	settings_ = settings;
 	mic_->setSourceName(settings_.micSource);
+	mic_->setLevelLogEnabled(settings_.micLevelLog);
 	if (window_) {
 		window_->setMicMuted(mic_->isMuted());
 		window_->applySettings(settings_);

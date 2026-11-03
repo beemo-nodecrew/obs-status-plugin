@@ -1,10 +1,11 @@
 #include "mic-monitor.hpp"
+#include "mic-level-probe.hpp"
 
 #include <plugin-support.h>
 
 #include <QMetaObject>
 
-MicMonitor::MicMonitor(QObject *parent) : QObject(parent)
+MicMonitor::MicMonitor(QObject *parent) : QObject(parent), probe_(new MicLevelProbe(this))
 {
 	signal_handler_t *sh = obs_get_signal_handler();
 	signal_handler_connect(sh, "source_create", onSourceCreate, this);
@@ -37,6 +38,11 @@ void MicMonitor::refresh()
 	attach();
 }
 
+void MicMonitor::setLevelLogEnabled(bool enabled)
+{
+	probe_->setEnabled(enabled);
+}
+
 void MicMonitor::attach()
 {
 	if (name_.isEmpty() || weak_) {
@@ -61,6 +67,7 @@ void MicMonitor::attach()
 	attached_ = source;
 	signal_handler_connect(obs_source_get_signal_handler(source), "mute", onMute, this);
 	const bool muted = obs_source_muted(source);
+	probe_->setSource(source);
 	obs_source_release(source);
 
 	obs_log(LOG_INFO, "mic source '%s' attached (muted: %s)", name_.toUtf8().constData(), muted ? "yes" : "no");
@@ -71,6 +78,7 @@ void MicMonitor::detach()
 {
 	if (!weak_)
 		return;
+	probe_->setSource(nullptr);
 	if (obs_source_t *source = obs_weak_source_get_source(weak_)) {
 		signal_handler_disconnect(obs_source_get_signal_handler(source), "mute", onMute, this);
 		obs_source_release(source);

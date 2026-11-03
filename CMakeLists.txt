@@ -52,6 +52,8 @@ target_sources(
     src/settings-dialog.cpp
     src/mic-monitor.hpp
     src/mic-monitor.cpp
+    src/mic-level-probe.hpp
+    src/mic-level-probe.cpp
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

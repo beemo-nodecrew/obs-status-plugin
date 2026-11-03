@@ -42,6 +42,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	enabled_ = new QCheckBox(tr_text("Settings.Enabled"), this);
 	screen_ = new QComboBox(this);
 	mic_ = new QComboBox(this);
+	micLevelLog_ = new QCheckBox(tr_text("Settings.MicLevelLog"), this);
 	position_ = new QComboBox(this);
 	position_->addItem(tr_text("Position.TopLeft"), static_cast<int>(BadgePosition::TopLeft));
 	position_->addItem(tr_text("Position.TopCenter"), static_cast<int>(BadgePosition::TopCenter));
@@ -68,6 +69,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	form->addRow(enabled_);
 	form->addRow(tr_text("Settings.Screen"), screen_);
 	form->addRow(tr_text("Settings.MicSource"), mic_);
+	form->addRow(micLevelLog_);
 	form->addRow(tr_text("Settings.Position"), position_);
 	form->addRow(tr_text("Settings.FontSize"), fontSize_);
 	form->addRow(tr_text("Settings.BorderWidth"), borderWidth_);
@@ -99,6 +101,7 @@ void SettingsDialog::load(const OverlaySettings &settings, const CaptureExclusio
 	enabled_->setChecked(settings.enabled);
 	populateScreens(settings);
 	populateMicSources(settings.micSource);
+	micLevelLog_->setChecked(settings.micLevelLog);
 	position_->setCurrentIndex(qMax(0, position_->findData(static_cast<int>(settings.position))));
 	fontSize_->setValue(settings.fontSize);
 	borderWidth_->setValue(settings.borderWidth);
@@ -120,6 +123,7 @@ OverlaySettings SettingsDialog::collect() const
 		s.screenName = screen_->currentData().toString();
 	}
 	s.micSource = mic_->currentIndex() > 0 ? mic_->currentData().toString() : QString();
+	s.micLevelLog = micLevelLog_->isChecked();
 	s.position = static_cast<BadgePosition>(position_->currentData().toInt());
 	s.fontSize = fontSize_->value();
 	s.borderWidth = borderWidth_->value();

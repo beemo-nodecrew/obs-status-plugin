@@ -23,4 +23,5 @@ struct OverlaySettings {
 	QString textStopped = QStringLiteral("녹화 안 함");
 	QString textRec = QStringLiteral("REC");
 	QString micSource;
+	bool micLevelLog = false; // 진단용, 저장하지 않음 (OBS 재시작 시 꺼짐)
 };

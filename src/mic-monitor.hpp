@@ -5,6 +5,8 @@
 #include <QObject>
 #include <QString>
 
+class MicLevelProbe;
+
 // 지정한 오디오 소스의 음소거 상태 추적 (이름 변경·삭제·재생성 대응)
 class MicMonitor : public QObject {
 	Q_OBJECT
@@ -17,6 +19,7 @@ public:
 	const QString &sourceName() const { return name_; }
 	bool isMuted() const { return muted_; }
 	void refresh();
+	void setLevelLogEnabled(bool enabled);
 
 signals:
 	void mutedChanged(bool muted);
@@ -36,4 +39,5 @@ private:
 	obs_weak_source_t *weak_ = nullptr;
 	obs_source_t *attached_ = nullptr; // 비교 전용, 역참조 금지
 	bool muted_ = false;
+	MicLevelProbe *probe_ = nullptr;
 };
