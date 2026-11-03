@@ -46,6 +46,11 @@ void MicMonitor::attach()
 	}
 
 	obs_source_t *source = obs_get_source_by_name(name_.toUtf8().constData());
+	if (source && obs_source_removed(source)) {
+		// 삭제됐지만 참조가 남아 이름 테이블에 남아 있는 소스는 무시
+		obs_source_release(source);
+		source = nullptr;
+	}
 	if (!source) {
 		obs_log(LOG_INFO, "mic source '%s' not found", name_.toUtf8().constData());
 		setMuted(false);
@@ -134,7 +139,13 @@ void MicMonitor::onSourceGone(void *data, calldata_t *cd)
 	QMetaObject::invokeMethod(
 		self,
 		[self, source]() {
-			if (!source || source != self->attached_)
+			if (!source || source != self->attached_ || !self->weak_)
+				return;
+			// 주소 재사용 대비: 포인터 비교만으로 판단하지 않고 실제 소멸·삭제 여부 확인
+			obs_source_t *current = obs_weak_source_get_source(self->weak_);
+			const bool gone = !current || obs_source_removed(current);
+			obs_source_release(current);
+			if (!gone)
 				return;
 			obs_log(LOG_INFO, "mic source '%s' removed", self->name_.toUtf8().constData());
 			self->detach();
