@@ -15,7 +15,7 @@ const QColor kBadgeTextDark(23, 23, 23);
 const QColor kRecBackground(0, 0, 0, 150);
 
 // 음소거된 마이크 아이콘 (캡슐 + 받침 + 사선)
-void drawMutedMic(QPainter &painter, const QRectF &box, const QColor &color)
+void drawMutedMic(QPainter &painter, const QRectF &box, const QColor &color, const QColor &slashColor)
 {
 	const qreal w = box.width();
 	const qreal h = box.height();
@@ -37,7 +37,7 @@ void drawMutedMic(QPainter &painter, const QRectF &box, const QColor &color)
 	painter.drawLine(QPointF(box.left() + w * 0.32, stemBottom.y()),
 			 QPointF(box.left() + w * 0.68, stemBottom.y()));
 
-	QPen slash(kPausedColor, stroke * 1.2, Qt::SolidLine, Qt::RoundCap);
+	QPen slash(slashColor, stroke * 1.2, Qt::SolidLine, Qt::RoundCap);
 	painter.setPen(slash);
 	painter.drawLine(QPointF(box.left() + w * 0.15, box.top() + h * 0.10),
 			 QPointF(box.right() - w * 0.15, box.bottom() - h * 0.06));
@@ -220,5 +220,6 @@ void OverlayWindow::paintEvent(QPaintEvent *)
 		x += width + gap;
 	}
 	if (showMic)
-		drawMutedMic(painter, QRectF(x, centerY - iconSize / 2.0, iconSize, iconSize), foreground);
+		drawMutedMic(painter, QRectF(x, centerY - iconSize / 2.0, iconSize, iconSize), foreground,
+			     background == kPausedColor ? foreground : kPausedColor);
 }
