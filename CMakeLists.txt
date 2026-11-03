@@ -44,6 +44,8 @@ target_sources(
     src/overlay-window.cpp
     src/overlay-controller.hpp
     src/overlay-controller.cpp
+    src/window-utils.hpp
+    src/window-utils.cpp
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

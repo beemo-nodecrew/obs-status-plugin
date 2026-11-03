@@ -11,10 +11,17 @@ OverlayController::OverlayController(QObject *parent) : QObject(parent)
 {
 	connect(qApp, &QGuiApplication::screenAdded, this, [this](QScreen *) { placeWindow(); });
 	connect(qApp, &QGuiApplication::screenRemoved, this, [this](QScreen *) { placeWindow(); });
+
+	topmostTimer_.setInterval(1500);
+	connect(&topmostTimer_, &QTimer::timeout, this, [this]() {
+		if (window_ && window_->isVisible())
+			raise_topmost(window_);
+	});
 }
 
 OverlayController::~OverlayController()
 {
+	topmostTimer_.stop();
 	delete window_;
 }
 
@@ -26,6 +33,7 @@ void OverlayController::start()
 		window_->setRecordingState(state_);
 	}
 	placeWindow();
+	topmostTimer_.start();
 }
 
 void OverlayController::setRecordingState(RecordingState state)
@@ -75,11 +83,31 @@ void OverlayController::placeWindow()
 	connect(screen, &QScreen::geometryChanged, this, &OverlayController::placeWindow, Qt::UniqueConnection);
 
 	window_->moveToScreen(screen);
-	if (!window_->isVisible())
+	if (!window_->isVisible()) {
+		// 표시 전에 캡처 제외를 걸어 녹화본에 한 프레임도 남지 않게 함
+		applyCaptureExclusion();
 		window_->show();
+	}
 	window_->moveToScreen(screen);
+	applyCaptureExclusion();
+	raise_topmost(window_);
 
 	const QRect g = screen->geometry();
 	obs_log(LOG_INFO, "overlay placed on screen '%s' (%d,%d %dx%d)", screen->name().toUtf8().constData(), g.x(),
 		g.y(), g.width(), g.height());
+}
+
+void OverlayController::applyCaptureExclusion()
+{
+	if (!window_)
+		return;
+	const CaptureExclusionResult result = exclude_from_capture(window_);
+	const bool changed = result.success != exclusion_.success || result.message != exclusion_.message;
+	exclusion_ = result;
+	if (!changed)
+		return;
+	if (result.success)
+		obs_log(LOG_INFO, "capture exclusion applied: %s", result.message.toUtf8().constData());
+	else
+		obs_log(LOG_WARNING, "capture exclusion unavailable: %s", result.message.toUtf8().constData());
 }

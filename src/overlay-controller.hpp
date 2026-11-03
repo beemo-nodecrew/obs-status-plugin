@@ -2,9 +2,11 @@
 
 #include "overlay-settings.hpp"
 #include "recording-state.hpp"
+#include "window-utils.hpp"
 
 #include <QObject>
 #include <QPointer>
+#include <QTimer>
 
 class OverlayWindow;
 class QScreen;
@@ -23,11 +25,16 @@ public:
 	const OverlaySettings &settings() const { return settings_; }
 	void applySettings(const OverlaySettings &settings);
 
+	const CaptureExclusionResult &captureExclusion() const { return exclusion_; }
+
 private:
 	QScreen *targetScreen() const;
 	void placeWindow();
+	void applyCaptureExclusion();
 
 	OverlaySettings settings_;
 	RecordingState state_ = RecordingState::Stopped;
 	QPointer<OverlayWindow> window_;
+	QTimer topmostTimer_;
+	CaptureExclusionResult exclusion_;
 };
