@@ -1,4 +1,5 @@
 #include "overlay-controller.hpp"
+#include "mic-monitor.hpp"
 #include "overlay-window.hpp"
 #include "settings-dialog.hpp"
 #include "settings-store.hpp"
@@ -13,6 +14,16 @@ OverlayController::OverlayController(QObject *parent) : QObject(parent), setting
 {
 	connect(qApp, &QGuiApplication::screenAdded, this, [this](QScreen *) { placeWindow(); });
 	connect(qApp, &QGuiApplication::screenRemoved, this, [this](QScreen *) { placeWindow(); });
+
+	mic_ = new MicMonitor(this);
+	connect(mic_, &MicMonitor::mutedChanged, this, [this](bool muted) {
+		if (window_)
+			window_->setMicMuted(muted);
+	});
+	connect(mic_, &MicMonitor::sourceRenamed, this, [this](const QString &name) {
+		settings_.micSource = name;
+		save_overlay_settings(settings_);
+	});
 
 	topmostTimer_.setInterval(1500);
 	connect(&topmostTimer_, &QTimer::timeout, this, [this]() {
@@ -35,8 +46,17 @@ void OverlayController::start()
 		window_->applySettings(settings_);
 		window_->setRecordingState(state_);
 	}
+	mic_->setSourceName(settings_.micSource);
+	window_->setMicMuted(mic_->isMuted());
 	placeWindow();
 	topmostTimer_.start();
+}
+
+void OverlayController::refreshMic()
+{
+	mic_->refresh();
+	if (window_)
+		window_->setMicMuted(mic_->isMuted());
 }
 
 void OverlayController::setRecordingState(RecordingState state)
@@ -64,7 +84,9 @@ void OverlayController::openSettings(QWidget *parent)
 void OverlayController::applySettings(const OverlaySettings &settings)
 {
 	settings_ = settings;
+	mic_->setSourceName(settings_.micSource);
 	if (window_) {
+		window_->setMicMuted(mic_->isMuted());
 		window_->applySettings(settings_);
 		placeWindow();
 	}

@@ -8,6 +8,7 @@
 #include <QPointer>
 #include <QTimer>
 
+class MicMonitor;
 class OverlayWindow;
 class SettingsDialog;
 class QWidget;
@@ -22,6 +23,7 @@ public:
 
 	void start();
 	void openSettings(QWidget *parent);
+	void refreshMic();
 	void setRecordingState(RecordingState state);
 	RecordingState recordingState() const { return state_; }
 
@@ -39,6 +41,7 @@ private:
 	RecordingState state_ = RecordingState::Stopped;
 	QPointer<OverlayWindow> window_;
 	QPointer<SettingsDialog> dialog_;
+	MicMonitor *mic_ = nullptr;
 	QTimer topmostTimer_;
 	CaptureExclusionResult exclusion_;
 };

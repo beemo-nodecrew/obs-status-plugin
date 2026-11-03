@@ -71,6 +71,10 @@ void on_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
 		set_state(RecordingState::Stopped, "stopped");
 		break;
+	case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED:
+		if (controller)
+			controller->refreshMic();
+		break;
 	case OBS_FRONTEND_EVENT_EXIT:
 		obs_log(LOG_INFO, "frontend exit");
 		delete controller;

@@ -50,6 +50,8 @@ target_sources(
     src/settings-store.cpp
     src/settings-dialog.hpp
     src/settings-dialog.cpp
+    src/mic-monitor.hpp
+    src/mic-monitor.cpp
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
