@@ -34,6 +34,16 @@ if(ENABLE_QT)
   )
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/recording-state.hpp)
+target_sources(
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE
+    src/plugin-main.cpp
+    src/recording-state.hpp
+    src/overlay-settings.hpp
+    src/overlay-window.hpp
+    src/overlay-window.cpp
+    src/overlay-controller.hpp
+    src/overlay-controller.cpp
+)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

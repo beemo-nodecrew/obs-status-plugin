@@ -20,6 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-frontend-api.h>
 #include <plugin-support.h>
 
+#include "overlay-controller.hpp"
 #include "recording-state.hpp"
 
 OBS_DECLARE_MODULE()
@@ -28,6 +29,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 namespace {
 
 RecordingState current_state = RecordingState::Stopped;
+OverlayController *controller = nullptr;
 
 void set_state(RecordingState state, const char *reason)
 {
@@ -38,6 +40,8 @@ void set_state(RecordingState state, const char *reason)
 	obs_log(LOG_INFO, "recording state: %s -> %s (%s)", recording_state_name(current_state),
 		recording_state_name(state), reason);
 	current_state = state;
+	if (controller)
+		controller->setRecordingState(state);
 }
 
 void on_frontend_event(enum obs_frontend_event event, void *)
@@ -46,6 +50,11 @@ void on_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_FINISHED_LOADING:
 		current_state = query_recording_state();
 		obs_log(LOG_INFO, "initial recording state: %s", recording_state_name(current_state));
+		if (!controller) {
+			controller = new OverlayController();
+			controller->setRecordingState(current_state);
+			controller->start();
+		}
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
 		set_state(RecordingState::Recording, "started");
@@ -61,6 +70,8 @@ void on_frontend_event(enum obs_frontend_event event, void *)
 		break;
 	case OBS_FRONTEND_EVENT_EXIT:
 		obs_log(LOG_INFO, "frontend exit");
+		delete controller;
+		controller = nullptr;
 		break;
 	default:
 		break;
