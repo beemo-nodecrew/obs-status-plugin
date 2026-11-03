@@ -20,6 +20,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-frontend-api.h>
 #include <plugin-support.h>
 
+#include <QAction>
+#include <QMainWindow>
+
 #include "overlay-controller.hpp"
 #include "recording-state.hpp"
 
@@ -83,6 +86,12 @@ void on_frontend_event(enum obs_frontend_event event, void *)
 bool obs_module_load(void)
 {
 	obs_frontend_add_event_callback(on_frontend_event, nullptr);
+
+	auto *action = static_cast<QAction *>(obs_frontend_add_tools_menu_qaction(obs_module_text("Menu.Title")));
+	QObject::connect(action, &QAction::triggered, []() {
+		if (controller)
+			controller->openSettings(static_cast<QMainWindow *>(obs_frontend_get_main_window()));
+	});
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 	return true;
 }

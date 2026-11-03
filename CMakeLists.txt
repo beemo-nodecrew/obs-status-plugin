@@ -46,6 +46,10 @@ target_sources(
     src/overlay-controller.cpp
     src/window-utils.hpp
     src/window-utils.cpp
+    src/settings-store.hpp
+    src/settings-store.cpp
+    src/settings-dialog.hpp
+    src/settings-dialog.cpp
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

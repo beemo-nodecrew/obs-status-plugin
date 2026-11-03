@@ -1,5 +1,7 @@
 #include "overlay-controller.hpp"
 #include "overlay-window.hpp"
+#include "settings-dialog.hpp"
+#include "settings-store.hpp"
 
 #include <plugin-support.h>
 #include <obs-module.h>
@@ -7,7 +9,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 
-OverlayController::OverlayController(QObject *parent) : QObject(parent)
+OverlayController::OverlayController(QObject *parent) : QObject(parent), settings_(load_overlay_settings())
 {
 	connect(qApp, &QGuiApplication::screenAdded, this, [this](QScreen *) { placeWindow(); });
 	connect(qApp, &QGuiApplication::screenRemoved, this, [this](QScreen *) { placeWindow(); });
@@ -22,6 +24,7 @@ OverlayController::OverlayController(QObject *parent) : QObject(parent)
 OverlayController::~OverlayController()
 {
 	topmostTimer_.stop();
+	delete dialog_;
 	delete window_;
 }
 
@@ -41,6 +44,21 @@ void OverlayController::setRecordingState(RecordingState state)
 	state_ = state;
 	if (window_)
 		window_->setRecordingState(state);
+}
+
+void OverlayController::openSettings(QWidget *parent)
+{
+	if (!dialog_) {
+		dialog_ = new SettingsDialog(parent);
+		connect(dialog_, &SettingsDialog::settingsApplied, this, [this](const OverlaySettings &settings) {
+			applySettings(settings);
+			save_overlay_settings(settings_);
+		});
+	}
+	dialog_->load(settings_, exclusion_);
+	dialog_->show();
+	dialog_->raise();
+	dialog_->activateWindow();
 }
 
 void OverlayController::applySettings(const OverlaySettings &settings)

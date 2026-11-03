@@ -9,6 +9,8 @@
 #include <QTimer>
 
 class OverlayWindow;
+class SettingsDialog;
+class QWidget;
 class QScreen;
 
 class OverlayController : public QObject {
@@ -19,6 +21,7 @@ public:
 	~OverlayController() override;
 
 	void start();
+	void openSettings(QWidget *parent);
 	void setRecordingState(RecordingState state);
 	RecordingState recordingState() const { return state_; }
 
@@ -35,6 +38,7 @@ private:
 	OverlaySettings settings_;
 	RecordingState state_ = RecordingState::Stopped;
 	QPointer<OverlayWindow> window_;
+	QPointer<SettingsDialog> dialog_;
 	QTimer topmostTimer_;
 	CaptureExclusionResult exclusion_;
 };
