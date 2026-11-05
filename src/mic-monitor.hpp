@@ -18,11 +18,13 @@ public:
 	void setSourceName(const QString &name);
 	const QString &sourceName() const { return name_; }
 	bool isMuted() const { return muted_; }
+	bool isAttached() const { return weak_ != nullptr; }
 	void refresh();
 	void setLevelLogEnabled(bool enabled);
 
 signals:
 	void mutedChanged(bool muted);
+	void attachedChanged(bool attached);
 	void sourceRenamed(const QString &newName);
 
 private:

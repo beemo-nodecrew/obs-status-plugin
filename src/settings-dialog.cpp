@@ -44,6 +44,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	mic_ = new QComboBox(this);
 	micLevelLog_ = new QCheckBox(tr_text("Settings.MicLevelLog"), this);
 	position_ = new QComboBox(this);
+	position_->addItem(tr_text("Position.TaskbarCenter"), static_cast<int>(BadgePosition::TaskbarCenter));
+	position_->addItem(tr_text("Position.BottomCenter"), static_cast<int>(BadgePosition::BottomCenter));
 	position_->addItem(tr_text("Position.TopLeft"), static_cast<int>(BadgePosition::TopLeft));
 	position_->addItem(tr_text("Position.TopCenter"), static_cast<int>(BadgePosition::TopCenter));
 	position_->addItem(tr_text("Position.TopRight"), static_cast<int>(BadgePosition::TopRight));
@@ -51,7 +53,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	position_->addItem(tr_text("Position.BottomRight"), static_cast<int>(BadgePosition::BottomRight));
 
 	fontSize_ = new QSpinBox(this);
-	fontSize_->setRange(12, 200);
+	fontSize_->setRange(10, 200);
 	fontSize_->setSuffix(QStringLiteral(" px"));
 	borderWidth_ = new QSpinBox(this);
 	borderWidth_->setRange(0, 100);
@@ -59,6 +61,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 
 	showRec_ = new QCheckBox(tr_text("Settings.ShowRec"), this);
 	showStopped_ = new QCheckBox(tr_text("Settings.ShowStopped"), this);
+	showElapsed_ = new QCheckBox(tr_text("Settings.ShowElapsed"), this);
 	textPaused_ = new QLineEdit(this);
 	textStopped_ = new QLineEdit(this);
 	textRec_ = new QLineEdit(this);
@@ -75,6 +78,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	form->addRow(tr_text("Settings.BorderWidth"), borderWidth_);
 	form->addRow(showRec_);
 	form->addRow(showStopped_);
+	form->addRow(showElapsed_);
 	form->addRow(tr_text("Settings.TextPaused"), textPaused_);
 	form->addRow(tr_text("Settings.TextStopped"), textStopped_);
 	form->addRow(tr_text("Settings.TextRec"), textRec_);
@@ -107,6 +111,7 @@ void SettingsDialog::load(const OverlaySettings &settings, const CaptureExclusio
 	borderWidth_->setValue(settings.borderWidth);
 	showRec_->setChecked(settings.showRec);
 	showStopped_->setChecked(settings.showStopped);
+	showElapsed_->setChecked(settings.showElapsed);
 	textPaused_->setText(settings.textPaused);
 	textStopped_->setText(settings.textStopped);
 	textRec_->setText(settings.textRec);
@@ -129,6 +134,7 @@ OverlaySettings SettingsDialog::collect() const
 	s.borderWidth = borderWidth_->value();
 	s.showRec = showRec_->isChecked();
 	s.showStopped = showStopped_->isChecked();
+	s.showElapsed = showElapsed_->isChecked();
 	s.textPaused = textPaused_->text().trimmed();
 	s.textStopped = textStopped_->text().trimmed();
 	s.textRec = textRec_->text().trimmed();

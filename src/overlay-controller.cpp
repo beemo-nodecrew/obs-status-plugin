@@ -5,6 +5,7 @@
 #include "settings-store.hpp"
 
 #include <plugin-support.h>
+#include <obs-frontend-api.h>
 #include <obs-module.h>
 
 #include <QGuiApplication>
@@ -16,13 +17,17 @@ OverlayController::OverlayController(QObject *parent) : QObject(parent), setting
 	connect(qApp, &QGuiApplication::screenRemoved, this, [this](QScreen *) { placeWindow(); });
 
 	mic_ = new MicMonitor(this);
-	connect(mic_, &MicMonitor::mutedChanged, this, [this](bool muted) {
-		if (window_)
-			window_->setMicMuted(muted);
-	});
+	connect(mic_, &MicMonitor::mutedChanged, this, [this](bool) { updateMicState(); });
+	connect(mic_, &MicMonitor::attachedChanged, this, [this](bool) { updateMicState(); });
 	connect(mic_, &MicMonitor::sourceRenamed, this, [this](const QString &name) {
 		settings_.micSource = name;
 		save_overlay_settings(settings_);
+	});
+
+	tickTimer_.setInterval(250);
+	connect(&tickTimer_, &QTimer::timeout, this, [this]() {
+		if (window_)
+			window_->setElapsed(elapsedMs());
 	});
 
 	topmostTimer_.setInterval(1500);
@@ -35,6 +40,9 @@ OverlayController::OverlayController(QObject *parent) : QObject(parent), setting
 OverlayController::~OverlayController()
 {
 	topmostTimer_.stop();
+	tickTimer_.stop();
+	delete mic_;
+	mic_ = nullptr;
 	delete dialog_;
 	delete window_;
 }
@@ -48,23 +56,70 @@ void OverlayController::start()
 	}
 	mic_->setSourceName(settings_.micSource);
 	mic_->setLevelLogEnabled(settings_.micLevelLog);
-	window_->setMicMuted(mic_->isMuted());
+	updateMicState();
+	if (state_ != RecordingState::Stopped)
+		initElapsedFromOutput();
 	placeWindow();
 	topmostTimer_.start();
+	tickTimer_.start();
 }
 
 void OverlayController::refreshMic()
 {
 	mic_->refresh();
-	if (window_)
-		window_->setMicMuted(mic_->isMuted());
+	updateMicState();
+}
+
+void OverlayController::updateMicState()
+{
+	if (window_ && mic_)
+		window_->setMicState(mic_->isAttached(), mic_->isMuted());
+}
+
+qint64 OverlayController::elapsedMs() const
+{
+	return accumulatedMs_ + (runTimer_.isValid() ? runTimer_.elapsed() : 0);
+}
+
+void OverlayController::initElapsedFromOutput()
+{
+	// 플러그인보다 먼저 녹화가 시작된 경우: 출력된 프레임 수로 경과 시간 추정
+	accumulatedMs_ = 0;
+	runTimer_.invalidate();
+	obs_output_t *output = obs_frontend_get_recording_output();
+	if (output) {
+		struct obs_video_info ovi = {};
+		const int frames = obs_output_get_total_frames(output);
+		if (obs_get_video_info(&ovi) && ovi.fps_num > 0)
+			accumulatedMs_ = static_cast<qint64>(frames) * 1000 * ovi.fps_den / ovi.fps_num;
+		obs_output_release(output);
+	}
+	if (state_ == RecordingState::Recording)
+		runTimer_.start();
 }
 
 void OverlayController::setRecordingState(RecordingState state)
 {
+	const RecordingState prev = state_;
 	state_ = state;
-	if (window_)
+
+	if (state == RecordingState::Stopped) {
+		accumulatedMs_ = 0;
+		runTimer_.invalidate();
+	} else if (prev == RecordingState::Stopped && state == RecordingState::Recording) {
+		accumulatedMs_ = 0;
+		runTimer_.start();
+	} else if (prev == RecordingState::Recording && state == RecordingState::Paused) {
+		accumulatedMs_ = elapsedMs();
+		runTimer_.invalidate();
+	} else if (prev == RecordingState::Paused && state == RecordingState::Recording) {
+		runTimer_.start();
+	}
+
+	if (window_) {
+		window_->setElapsed(elapsedMs());
 		window_->setRecordingState(state);
+	}
 }
 
 void OverlayController::openSettings(QWidget *parent)
@@ -88,7 +143,7 @@ void OverlayController::applySettings(const OverlaySettings &settings)
 	mic_->setSourceName(settings_.micSource);
 	mic_->setLevelLogEnabled(settings_.micLevelLog);
 	if (window_) {
-		window_->setMicMuted(mic_->isMuted());
+		updateMicState();
 		window_->applySettings(settings_);
 		placeWindow();
 	}
@@ -123,6 +178,8 @@ void OverlayController::placeWindow()
 	}
 
 	connect(screen, &QScreen::geometryChanged, this, &OverlayController::placeWindow, Qt::UniqueConnection);
+	connect(screen, &QScreen::availableGeometryChanged, this, &OverlayController::placeWindow,
+		Qt::UniqueConnection);
 
 	window_->moveToScreen(screen);
 	if (!window_->isVisible()) {
@@ -131,6 +188,7 @@ void OverlayController::placeWindow()
 		window_->show();
 	}
 	window_->moveToScreen(screen);
+	updateTaskbarRect(screen);
 	applyCaptureExclusion();
 	raise_topmost(window_);
 
@@ -152,4 +210,17 @@ void OverlayController::applyCaptureExclusion()
 		obs_log(LOG_INFO, "capture exclusion applied: %s", result.message.toUtf8().constData());
 	else
 		obs_log(LOG_WARNING, "capture exclusion unavailable: %s", result.message.toUtf8().constData());
+}
+
+void OverlayController::updateTaskbarRect(QScreen *screen)
+{
+	if (!window_ || !screen)
+		return;
+	// 작업 영역(availableGeometry) 밖의 아래쪽 띠 = 하단 작업 표시줄
+	const QRect full = screen->geometry();
+	const QRect avail = screen->availableGeometry();
+	QRect taskbar;
+	if (avail.bottom() < full.bottom())
+		taskbar = QRect(0, avail.bottom() + 1 - full.top(), full.width(), full.bottom() - avail.bottom());
+	window_->setTaskbarRect(taskbar);
 }

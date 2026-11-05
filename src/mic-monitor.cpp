@@ -72,6 +72,7 @@ void MicMonitor::attach()
 
 	obs_log(LOG_INFO, "mic source '%s' attached (muted: %s)", name_.toUtf8().constData(), muted ? "yes" : "no");
 	setMuted(muted);
+	emit attachedChanged(true);
 }
 
 void MicMonitor::detach()
@@ -86,6 +87,7 @@ void MicMonitor::detach()
 	obs_weak_source_release(weak_);
 	weak_ = nullptr;
 	attached_ = nullptr;
+	emit attachedChanged(false);
 }
 
 void MicMonitor::setMuted(bool muted)

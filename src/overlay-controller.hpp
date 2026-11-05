@@ -4,6 +4,7 @@
 #include "recording-state.hpp"
 #include "window-utils.hpp"
 
+#include <QElapsedTimer>
 #include <QObject>
 #include <QPointer>
 #include <QTimer>
@@ -36,6 +37,10 @@ private:
 	QScreen *targetScreen() const;
 	void placeWindow();
 	void applyCaptureExclusion();
+	void updateTaskbarRect(QScreen *screen);
+	void updateMicState();
+	qint64 elapsedMs() const;
+	void initElapsedFromOutput();
 
 	OverlaySettings settings_;
 	RecordingState state_ = RecordingState::Stopped;
@@ -43,5 +48,8 @@ private:
 	QPointer<SettingsDialog> dialog_;
 	MicMonitor *mic_ = nullptr;
 	QTimer topmostTimer_;
+	QTimer tickTimer_;
+	QElapsedTimer runTimer_;
+	qint64 accumulatedMs_ = 0;
 	CaptureExclusionResult exclusion_;
 };

@@ -38,6 +38,7 @@ private:
 	QSpinBox *borderWidth_ = nullptr;
 	QCheckBox *showRec_ = nullptr;
 	QCheckBox *showStopped_ = nullptr;
+	QCheckBox *showElapsed_ = nullptr;
 	QLineEdit *textPaused_ = nullptr;
 	QLineEdit *textStopped_ = nullptr;
 	QLineEdit *textRec_ = nullptr;
