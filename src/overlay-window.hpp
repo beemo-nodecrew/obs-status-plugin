@@ -34,6 +34,7 @@ private:
 		QRect rect;
 		bool showStatus = false;
 		bool showTime = false;
+		bool showCapture = false;
 		bool showMic = false;
 		int fontPx = 14;
 	};

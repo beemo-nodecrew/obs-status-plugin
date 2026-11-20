@@ -67,11 +67,28 @@ void draw_status_icon(QPainter &painter, RecordingState state, const QRectF &box
 	}
 }
 
-void draw_mic_icon(QPainter &painter, const QRectF &box, bool muted)
+void draw_monitor_icon(QPainter &painter, const QRectF &box, const QColor &color)
 {
 	const qreal w = box.width();
 	const qreal h = box.height();
-	const QColor color = muted ? kRecRed : kTextPrimary;
+	const qreal stroke = qMax<qreal>(1.6, w * 0.10);
+
+	painter.setPen(QPen(color, stroke, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+	painter.setBrush(Qt::NoBrush);
+	const QRectF screen(box.left() + w * 0.06, box.top() + h * 0.10, w * 0.88, h * 0.62);
+	painter.drawRoundedRect(screen, w * 0.10, w * 0.10);
+	const qreal cx = box.center().x();
+	const qreal baseY = box.top() + h * 0.90;
+	painter.drawLine(QPointF(cx, screen.bottom()), QPointF(cx, baseY));
+	painter.drawLine(QPointF(cx - w * 0.22, baseY), QPointF(cx + w * 0.22, baseY));
+}
+
+// found=false: 장치를 찾지 못함 → 빨간색, 켜짐 점 없음
+void draw_mic_icon(QPainter &painter, const QRectF &box, bool muted, bool found)
+{
+	const qreal w = box.width();
+	const qreal h = box.height();
+	const QColor color = (muted || !found) ? kRecRed : kTextPrimary;
 	const qreal stroke = qMax<qreal>(1.6, w * 0.10);
 
 	painter.setPen(Qt::NoPen);
@@ -95,7 +112,7 @@ void draw_mic_icon(QPainter &painter, const QRectF &box, bool muted)
 		painter.drawLine(a, b);
 		painter.setPen(QPen(color, stroke, Qt::SolidLine, Qt::RoundCap));
 		painter.drawLine(a, b);
-	} else {
+	} else if (found) {
 		painter.setPen(Qt::NoPen);
 		painter.setBrush(kMicLive);
 		const qreal d = w * 0.26;
@@ -261,8 +278,9 @@ OverlayWindow::PillLayout OverlayWindow::computeLayout() const
 		break;
 	}
 	layout.showTime = layout.showStatus && settings_.showElapsed && state_ != RecordingState::Stopped;
-	layout.showMic = micAvailable_;
-	if (!layout.showStatus && !layout.showMic)
+	layout.showCapture = captureLabel_.visible;
+	layout.showMic = micAvailable_ || micLabel_.visible;
+	if (!layout.showStatus && !layout.showCapture && !layout.showMic)
 		return layout;
 
 	int fontPx = qMax(10, settings_.fontSize);
@@ -276,6 +294,7 @@ OverlayWindow::PillLayout OverlayWindow::computeLayout() const
 
 	const QFontMetrics label(make_font(fontPx, QFont::DemiBold));
 	const QFontMetrics mono(make_font(fontPx, QFont::Medium));
+	const QFontMetrics name(make_font(fontPx, QFont::Medium));
 	const int height = qRound(fontPx * 2.2);
 	const int padX = qRound(fontPx * 0.95);
 	const int gap = qRound(fontPx * 0.55);
@@ -289,10 +308,18 @@ OverlayWindow::PillLayout OverlayWindow::computeLayout() const
 	}
 	if (layout.showTime)
 		width += gap + mono.horizontalAdvance(QStringLiteral("00:00:00"));
+	if (layout.showCapture) {
+		if (parts > 0)
+			width += gap * 2 + 1;
+		width += icon + gap + name.horizontalAdvance(captureLabel_.text);
+		++parts;
+	}
 	if (layout.showMic) {
 		if (parts > 0)
 			width += gap * 2 + 1;
 		width += icon;
+		if (micLabel_.visible)
+			width += gap + name.horizontalAdvance(micLabel_.text);
 	}
 	layout.rect = pillRect(QSize(width, height));
 	return layout;
@@ -378,15 +405,45 @@ void OverlayWindow::drawPill(QPainter &painter, const PillLayout &layout) const
 		x += w;
 	}
 
+	const QFont nameFont = make_font(fontPx, QFont::Medium);
+	const QFontMetrics nameMetrics(nameFont);
+	bool hasPrev = layout.showStatus;
+	auto drawDivider = [&]() {
+		x += gap;
+		painter.setPen(QPen(kDivider, 1.0));
+		const qreal dh = pill.height() * 0.42;
+		painter.drawLine(QPointF(x + 0.5, cy - dh / 2), QPointF(x + 0.5, cy + dh / 2));
+		x += 1 + gap;
+	};
+	auto drawName = [&](const SourceLabel &label) {
+		painter.setFont(nameFont);
+		painter.setPen(label.found ? kTextPrimary : kRecRed);
+		const int w = nameMetrics.horizontalAdvance(label.text);
+		painter.drawText(QRectF(x, pill.top(), w + 2, pill.height()), Qt::AlignVCenter | Qt::AlignLeft,
+				 label.text);
+		x += w;
+	};
+
+	if (layout.showCapture) {
+		if (hasPrev)
+			drawDivider();
+		draw_monitor_icon(painter, QRectF(x, cy - icon / 2.0, icon, icon),
+				  captureLabel_.found ? kTextPrimary : kRecRed);
+		x += icon + gap;
+		drawName(captureLabel_);
+		hasPrev = true;
+	}
+
 	if (layout.showMic) {
-		if (layout.showStatus) {
+		if (hasPrev)
+			drawDivider();
+		const bool micFound = !micLabel_.visible || micLabel_.found;
+		draw_mic_icon(painter, QRectF(x, cy - icon / 2.0, icon, icon), micMuted_, micFound);
+		x += icon;
+		if (micLabel_.visible) {
 			x += gap;
-			painter.setPen(QPen(kDivider, 1.0));
-			const qreal dh = pill.height() * 0.42;
-			painter.drawLine(QPointF(x + 0.5, cy - dh / 2), QPointF(x + 0.5, cy + dh / 2));
-			x += 1 + gap;
+			drawName(micLabel_);
 		}
-		draw_mic_icon(painter, QRectF(x, cy - icon / 2.0, icon, icon), micMuted_);
 	}
 }
 
