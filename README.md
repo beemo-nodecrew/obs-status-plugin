@@ -31,7 +31,7 @@ cmake --install build_x64 --prefix release --config RelWithDebInfo
 
 처음 configure할 때 OBS 소스, obs-deps, Qt6를 자동으로 받습니다 (`buildspec.json`).
 
-`main`에 푸시하면 GitHub Actions가 Windows·macOS·Ubuntu 빌드를 실행합니다. Windows 결과물은 Actions 실행 페이지의 Artifacts에서 받을 수 있습니다.
+`main`에 푸시하면 GitHub Actions가 Windows 빌드만 실행합니다 (macOS·Ubuntu 빌드는 사용하지 않아 제거). Windows 결과물은 Actions 실행 페이지의 Artifacts에서 받을 수 있습니다.
 
 ## 설치 (Windows)
 
