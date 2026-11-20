@@ -1,9 +1,32 @@
 #include "mic-monitor.hpp"
 #include "mic-level-probe.hpp"
+#include "audio-device-name.hpp"
 
 #include <plugin-support.h>
 
 #include <QMetaObject>
+
+#include <cstring>
+
+namespace {
+
+// device_id 장치 목록 속성을 가진 오디오 소스 종류
+bool has_device_list(const char *id)
+{
+	static const char *const kTypes[] = {"wasapi_input_capture",    "wasapi_output_capture",
+					     "coreaudio_input_capture", "coreaudio_output_capture",
+					     "pulse_input_capture",     "pulse_output_capture",
+					     "alsa_input_capture"};
+	if (!id)
+		return false;
+	for (const char *type : kTypes) {
+		if (strcmp(id, type) == 0)
+			return true;
+	}
+	return false;
+}
+
+} // namespace
 
 MicMonitor::MicMonitor(QObject *parent) : QObject(parent), probe_(new MicLevelProbe(this))
 {
@@ -47,12 +70,27 @@ SourceLabel MicMonitor::deviceLabel() const
 
 	obs_source_t *source = weak_ ? obs_weak_source_get_source(weak_) : nullptr;
 	if (source) {
+		const char *id = obs_source_get_unversioned_id(source);
 		QString text;
-		switch (list_property_label(source, "device_id", &text)) {
-		case ListLabel::Found:
+		// 장치 목록이 없는 종류(영상 캡처 장치, 미디어 등)는 속성 조회 없이 소스 이름 표시
+		const ListLabel result = has_device_list(id) ? list_property_label(source, "device_id", &text)
+							     : ListLabel::NoProperty;
+		switch (result) {
+		case ListLabel::Found: {
 			label.found = true;
+			obs_data_t *settings = obs_source_get_settings(source);
+			const bool isDefault = strcmp(obs_data_get_string(settings, "device_id"), "default") == 0;
+			obs_data_release(settings);
+			if (isDefault) {
+				// "기본값" 대신 실제로 잡히는 장치 이름
+				const QString actual =
+					default_audio_device_name(strcmp(id, "wasapi_output_capture") != 0);
+				if (!actual.isEmpty())
+					text = actual;
+			}
 			label.text = elide_label(text);
 			break;
+		}
 		case ListLabel::NoProperty:
 			label.found = true;
 			label.text = elide_label(name_);

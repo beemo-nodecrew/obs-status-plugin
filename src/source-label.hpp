@@ -23,7 +23,7 @@ enum class ListLabel {
 	NoProperty, // 해당 이름의 목록 속성이 없음
 };
 
-// 소스 속성 prop(목록)에서 소스 설정의 현재 값과 같은 활성 항목을 찾아 *label에 문구 저장
+// 소스 종류의 속성 prop(목록)에서 소스 설정의 현재 값과 같은 활성 항목을 찾아 *label에 문구 저장
 ListLabel list_property_label(obs_source_t *source, const char *prop, QString *label);
 
 // "DELL U2720Q: 2560x1440 @ 1920,0" → "DELL U2720Q"

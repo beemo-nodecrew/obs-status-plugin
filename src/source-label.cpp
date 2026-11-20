@@ -9,7 +9,9 @@ ListLabel list_property_label(obs_source_t *source, const char *prop, QString *l
 	if (!source || !prop)
 		return ListLabel::NoProperty;
 
-	obs_properties_t *props = obs_source_properties(source);
+	// 소스 인스턴스가 아닌 소스 종류 기준으로 속성 조회:
+	// obs_source_properties는 속성 변경 콜백을 실행해 디스플레이 캡처를 다시 초기화하므로 쓰지 않음
+	obs_properties_t *props = obs_get_source_properties(obs_source_get_id(source));
 	if (!props)
 		return ListLabel::NoProperty;
 

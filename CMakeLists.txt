@@ -54,6 +54,8 @@ target_sources(
     src/mic-monitor.cpp
     src/source-label.hpp
     src/source-label.cpp
+    src/audio-device-name.hpp
+    src/audio-device-name.cpp
     src/capture-monitor.hpp
     src/capture-monitor.cpp
     src/mic-level-probe.hpp

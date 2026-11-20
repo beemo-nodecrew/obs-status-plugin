@@ -40,14 +40,16 @@ void CaptureMonitor::refresh()
 			QString text;
 			ListLabel result = list_property_label(source, "monitor_id", &text);
 			if (result == ListLabel::NoProperty)
-				result = list_property_label(source, "monitor", &text); // 구버전 정수 설정
+				result = list_property_label(source, "monitor", &text); // 구버전 OBS 정수 설정
 			width = obs_source_get_width(source);
 			height = obs_source_get_height(source);
 
 			if (result == ListLabel::NoProperty) {
 				next.found = true;
 				next.text = elide_label(name_);
-			} else if (result == ListLabel::Found && width > 0 && height > 0) {
+			} else if (result == ListLabel::Found &&
+				   (!obs_source_showing(source) || (width > 0 && height > 0))) {
+				// 화면에 나오지 않는 소스는 OBS가 캡처를 멈춰 크기가 0이므로 크기 검사 제외
 				next.found = true;
 				next.text = elide_label(trim_monitor_label(text));
 			}
