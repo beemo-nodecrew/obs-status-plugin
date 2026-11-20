@@ -25,12 +25,14 @@ signals:
 
 private:
 	void populateScreens(const OverlaySettings &settings);
+	void populateCaptureSources(const QString &selected);
 	void populateMicSources(const QString &selected);
 	void updateExclusionLabel(const CaptureExclusionResult &exclusion);
 
 	OverlaySettings base_;
 	QCheckBox *enabled_ = nullptr;
 	QComboBox *screen_ = nullptr;
+	QComboBox *capture_ = nullptr;
 	QComboBox *mic_ = nullptr;
 	QCheckBox *micLevelLog_ = nullptr;
 	QComboBox *position_ = nullptr;

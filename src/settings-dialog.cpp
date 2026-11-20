@@ -14,6 +14,8 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
+#include <cstring>
+
 namespace {
 
 QString tr_text(const char *key)
@@ -32,6 +34,18 @@ bool collect_audio_source(void *param, obs_source_t *source)
 	return true;
 }
 
+bool collect_capture_source(void *param, obs_source_t *source)
+{
+	auto *names = static_cast<QStringList *>(param);
+	const char *id = obs_source_get_unversioned_id(source);
+	if (id && strcmp(id, "monitor_capture") == 0) {
+		const char *name = obs_source_get_name(source);
+		if (name && *name)
+			names->append(QString::fromUtf8(name));
+	}
+	return true;
+}
+
 } // namespace
 
 SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
@@ -41,6 +55,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 
 	enabled_ = new QCheckBox(tr_text("Settings.Enabled"), this);
 	screen_ = new QComboBox(this);
+	capture_ = new QComboBox(this);
 	mic_ = new QComboBox(this);
 	micLevelLog_ = new QCheckBox(tr_text("Settings.MicLevelLog"), this);
 	position_ = new QComboBox(this);
@@ -71,6 +86,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 	auto *form = new QFormLayout();
 	form->addRow(enabled_);
 	form->addRow(tr_text("Settings.Screen"), screen_);
+	form->addRow(tr_text("Settings.CaptureSource"), capture_);
 	form->addRow(tr_text("Settings.MicSource"), mic_);
 	form->addRow(micLevelLog_);
 	form->addRow(tr_text("Settings.Position"), position_);
@@ -104,6 +120,7 @@ void SettingsDialog::load(const OverlaySettings &settings, const CaptureExclusio
 	base_ = settings;
 	enabled_->setChecked(settings.enabled);
 	populateScreens(settings);
+	populateCaptureSources(settings.captureSource);
 	populateMicSources(settings.micSource);
 	micLevelLog_->setChecked(settings.micLevelLog);
 	position_->setCurrentIndex(qMax(0, position_->findData(static_cast<int>(settings.position))));
@@ -127,6 +144,7 @@ OverlaySettings SettingsDialog::collect() const
 		s.screenIndex = screenIndex;
 		s.screenName = screen_->currentData().toString();
 	}
+	s.captureSource = capture_->currentIndex() > 0 ? capture_->currentData().toString() : QString();
 	s.micSource = mic_->currentIndex() > 0 ? mic_->currentData().toString() : QString();
 	s.micLevelLog = micLevelLog_->isChecked();
 	s.position = static_cast<BadgePosition>(position_->currentData().toInt());
@@ -165,6 +183,25 @@ void SettingsDialog::populateScreens(const OverlaySettings &settings)
 	if (selected < 0 && settings.screenIndex >= 0 && settings.screenIndex < screens.size())
 		selected = settings.screenIndex;
 	screen_->setCurrentIndex(qMax(0, selected));
+}
+
+void SettingsDialog::populateCaptureSources(const QString &selected)
+{
+	capture_->clear();
+	capture_->addItem(tr_text("Settings.CaptureNone"), QString());
+
+	QStringList names;
+	obs_enum_sources(collect_capture_source, &names);
+	names.removeDuplicates();
+	names.sort(Qt::CaseInsensitive);
+	if (!selected.isEmpty() && !names.contains(selected))
+		names.prepend(selected);
+
+	for (const QString &name : names)
+		capture_->addItem(name, name);
+
+	const int index = selected.isEmpty() ? 0 : capture_->findData(selected);
+	capture_->setCurrentIndex(qMax(0, index));
 }
 
 void SettingsDialog::populateMicSources(const QString &selected)

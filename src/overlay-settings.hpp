@@ -25,6 +25,7 @@ struct OverlaySettings {
 	QString textPaused = QStringLiteral("녹화 일시정지");
 	QString textStopped = QStringLiteral("녹화 안 함");
 	QString textRec = QStringLiteral("녹화 중");
+	QString captureSource; // 녹화 화면(디스플레이 캡처) 소스 이름, 빈 값이면 사용 안 함
 	QString micSource;
 	bool micLevelLog = false; // 진단용, 저장하지 않음 (OBS 재시작 시 꺼짐)
 };
