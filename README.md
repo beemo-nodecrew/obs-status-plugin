@@ -5,6 +5,7 @@ OBS 녹화 상태(녹화 중 / 일시정지 / 정지)와 마이크 음소거 상
 - 개발 지침: [docs/PLAN.md](docs/PLAN.md)
 - 기반: [obsproject/obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate)
 - 대상 OS: Windows 10 2004 이상
+- 필요 OBS: 31 이상 (OBS 31.1.1 기준 빌드, Qt 6.8. OBS 30 이하에서는 로드되지 않음)
 
 ## 진행 상황
 
@@ -42,7 +43,7 @@ cmake --install build_x64 --prefix release --config RelWithDebInfo
 4. OBS 실행 후 `도움말 > 로그 파일 > 현재 로그 보기`에서 아래 줄 확인
 
 ```
-[obs-status-overlay] plugin loaded successfully (version 0.1.0)
+[obs-status-overlay] plugin loaded successfully (version 0.2.0)
 [obs-status-overlay] capture exclusion applied: WDA_EXCLUDEFROMCAPTURE
 ```
 

@@ -53,3 +53,10 @@ fix: 일시정지 배지에서 마이크 음소거 사선이 보이지 않던 �
 
 - `src/`의 C/C++ 파일을 바꿨으면 push 전에 clang-format 19.1.1로 정리한다(`uvx --from clang-format==19.1.1 clang-format -i <파일>`). CI의 check-format이 같은 버전으로 검사한다.
 - 로컬에 빌드 도구가 없으므로 빌드 확인은 `main` push 후 GitHub Actions 결과로 한다.
+
+## 버전
+
+- 버전은 `buildspec.json`의 `version` 한 곳에서 관리한다(설치 파일 이름과 OBS 로그에 표시됨).
+- push할 때 직전 버전 이후 커밋에 `feat`가 있으면 두 번째 자리를 올리고 세 번째 자리를 0으로 한다(0.2.0 → 0.3.0). `fix`만 있으면 세 번째 자리를 올린다(0.2.0 → 0.2.1). `docs`·`chore`·`refactor`만 있으면 올리지 않는다.
+- 버전을 올리면 README의 로그 예시(`plugin loaded successfully (version …)`)도 같이 고친다.
+- 커밋은 `chore: 버전 <버전>으로 올림`으로 따로 만든다. 태그와 GitHub 릴리스는 만들지 않는다.
