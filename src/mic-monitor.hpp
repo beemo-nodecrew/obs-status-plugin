@@ -1,5 +1,7 @@
 #pragma once
 
+#include "source-label.hpp"
+
 #include <obs.h>
 
 #include <QObject>
@@ -20,6 +22,7 @@ public:
 	bool isMuted() const { return muted_; }
 	bool isAttached() const { return weak_ != nullptr; }
 	void refresh();
+	SourceLabel deviceLabel() const; // 소스 미지정이면 visible=false
 	void setLevelLogEnabled(bool enabled);
 
 signals:

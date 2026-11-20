@@ -134,6 +134,22 @@ void OverlayWindow::setMicState(bool available, bool muted)
 	update();
 }
 
+void OverlayWindow::setCaptureLabel(const SourceLabel &label)
+{
+	if (captureLabel_ == label)
+		return;
+	captureLabel_ = label;
+	update();
+}
+
+void OverlayWindow::setMicLabel(const SourceLabel &label)
+{
+	if (micLabel_ == label)
+		return;
+	micLabel_ = label;
+	update();
+}
+
 void OverlayWindow::setElapsed(qint64 ms)
 {
 	if (elapsedMs_ / 1000 == ms / 1000) {

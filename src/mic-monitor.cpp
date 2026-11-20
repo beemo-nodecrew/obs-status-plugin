@@ -38,6 +38,35 @@ void MicMonitor::refresh()
 	attach();
 }
 
+SourceLabel MicMonitor::deviceLabel() const
+{
+	SourceLabel label;
+	if (name_.isEmpty())
+		return label;
+	label.visible = true;
+
+	obs_source_t *source = weak_ ? obs_weak_source_get_source(weak_) : nullptr;
+	if (source) {
+		QString text;
+		switch (list_property_label(source, "device_id", &text)) {
+		case ListLabel::Found:
+			label.found = true;
+			label.text = elide_label(text);
+			break;
+		case ListLabel::NoProperty:
+			label.found = true;
+			label.text = elide_label(name_);
+			break;
+		case ListLabel::Missing:
+			break;
+		}
+		obs_source_release(source);
+	}
+	if (!label.found)
+		label.text = not_found_text();
+	return label;
+}
+
 void MicMonitor::setLevelLogEnabled(bool enabled)
 {
 	probe_->setEnabled(enabled);

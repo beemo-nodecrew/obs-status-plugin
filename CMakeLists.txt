@@ -52,6 +52,10 @@ target_sources(
     src/settings-dialog.cpp
     src/mic-monitor.hpp
     src/mic-monitor.cpp
+    src/source-label.hpp
+    src/source-label.cpp
+    src/capture-monitor.hpp
+    src/capture-monitor.cpp
     src/mic-level-probe.hpp
     src/mic-level-probe.cpp
 )

@@ -9,6 +9,7 @@
 #include <QPointer>
 #include <QTimer>
 
+class CaptureMonitor;
 class MicMonitor;
 class OverlayWindow;
 class SettingsDialog;
@@ -39,6 +40,7 @@ private:
 	void applyCaptureExclusion();
 	void updateTaskbarRect(QScreen *screen);
 	void updateMicState();
+	void updateLabels();
 	qint64 elapsedMs() const;
 	void initElapsedFromOutput();
 
@@ -47,8 +49,10 @@ private:
 	QPointer<OverlayWindow> window_;
 	QPointer<SettingsDialog> dialog_;
 	MicMonitor *mic_ = nullptr;
+	CaptureMonitor *capture_ = nullptr;
 	QTimer topmostTimer_;
 	QTimer tickTimer_;
+	QTimer labelTimer_;
 	QElapsedTimer runTimer_;
 	qint64 accumulatedMs_ = 0;
 	CaptureExclusionResult exclusion_;

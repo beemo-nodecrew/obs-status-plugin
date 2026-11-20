@@ -1,4 +1,5 @@
 #include "overlay-controller.hpp"
+#include "capture-monitor.hpp"
 #include "mic-monitor.hpp"
 #include "overlay-window.hpp"
 #include "settings-dialog.hpp"
@@ -13,16 +14,35 @@
 
 OverlayController::OverlayController(QObject *parent) : QObject(parent), settings_(load_overlay_settings())
 {
-	connect(qApp, &QGuiApplication::screenAdded, this, [this](QScreen *) { placeWindow(); });
-	connect(qApp, &QGuiApplication::screenRemoved, this, [this](QScreen *) { placeWindow(); });
+	connect(qApp, &QGuiApplication::screenAdded, this, [this](QScreen *) {
+		placeWindow();
+		updateLabels();
+	});
+	connect(qApp, &QGuiApplication::screenRemoved, this, [this](QScreen *) {
+		placeWindow();
+		updateLabels();
+	});
 
 	mic_ = new MicMonitor(this);
 	connect(mic_, &MicMonitor::mutedChanged, this, [this](bool) { updateMicState(); });
-	connect(mic_, &MicMonitor::attachedChanged, this, [this](bool) { updateMicState(); });
+	connect(mic_, &MicMonitor::attachedChanged, this, [this](bool) {
+		updateMicState();
+		updateLabels();
+	});
 	connect(mic_, &MicMonitor::sourceRenamed, this, [this](const QString &name) {
 		settings_.micSource = name;
 		save_overlay_settings(settings_);
 	});
+
+	capture_ = new CaptureMonitor(this);
+	connect(capture_, &CaptureMonitor::sourceRenamed, this, [this](const QString &name) {
+		settings_.captureSource = name;
+		save_overlay_settings(settings_);
+	});
+
+	// 모니터 재연결로 캡처 설정이 풀리는 경우 등 이벤트로 알 수 없는 변화 대비
+	labelTimer_.setInterval(2000);
+	connect(&labelTimer_, &QTimer::timeout, this, &OverlayController::updateLabels);
 
 	tickTimer_.setInterval(250);
 	connect(&tickTimer_, &QTimer::timeout, this, [this]() {
@@ -41,6 +61,9 @@ OverlayController::~OverlayController()
 {
 	topmostTimer_.stop();
 	tickTimer_.stop();
+	labelTimer_.stop();
+	delete capture_;
+	capture_ = nullptr;
 	delete mic_;
 	mic_ = nullptr;
 	delete dialog_;
@@ -56,18 +79,33 @@ void OverlayController::start()
 	}
 	mic_->setSourceName(settings_.micSource);
 	mic_->setLevelLogEnabled(settings_.micLevelLog);
+	capture_->setSourceName(settings_.captureSource);
 	updateMicState();
+	updateLabels();
 	if (state_ != RecordingState::Stopped)
 		initElapsedFromOutput();
 	placeWindow();
 	topmostTimer_.start();
 	tickTimer_.start();
+	labelTimer_.start();
 }
 
 void OverlayController::refreshMic()
 {
 	mic_->refresh();
 	updateMicState();
+	updateLabels();
+}
+
+void OverlayController::updateLabels()
+{
+	if (!capture_ || !mic_)
+		return;
+	capture_->refresh();
+	if (window_) {
+		window_->setCaptureLabel(capture_->label());
+		window_->setMicLabel(mic_->deviceLabel());
+	}
 }
 
 void OverlayController::updateMicState()
@@ -142,8 +180,10 @@ void OverlayController::applySettings(const OverlaySettings &settings)
 	settings_ = settings;
 	mic_->setSourceName(settings_.micSource);
 	mic_->setLevelLogEnabled(settings_.micLevelLog);
+	capture_->setSourceName(settings_.captureSource);
 	if (window_) {
 		updateMicState();
+		updateLabels();
 		window_->applySettings(settings_);
 		placeWindow();
 	}

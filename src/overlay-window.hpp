@@ -2,6 +2,7 @@
 
 #include "overlay-settings.hpp"
 #include "recording-state.hpp"
+#include "source-label.hpp"
 
 #include <QWidget>
 
@@ -17,6 +18,8 @@ public:
 	void setRecordingState(RecordingState state);
 	void setMicState(bool available, bool muted);
 	void setElapsed(qint64 ms);
+	void setCaptureLabel(const SourceLabel &label);
+	void setMicLabel(const SourceLabel &label);
 	void applySettings(const OverlaySettings &settings);
 	void moveToScreen(QScreen *screen);
 
@@ -46,6 +49,8 @@ private:
 	RecordingState state_ = RecordingState::Stopped;
 	bool micAvailable_ = false;
 	bool micMuted_ = false;
+	SourceLabel captureLabel_;
+	SourceLabel micLabel_;
 	qint64 elapsedMs_ = 0;
 	QRect taskbarRect_;
 	QRect lastPill_;
